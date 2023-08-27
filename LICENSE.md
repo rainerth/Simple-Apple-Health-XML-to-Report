@@ -1,5 +1,6 @@
 
 Copyright (c) 2019, Jason Meno
+Copyright (c) 2023, Rainer Thieringer
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

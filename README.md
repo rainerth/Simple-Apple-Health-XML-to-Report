@@ -1,7 +1,7 @@
-# Simple Apple Health XML to CSV
+# Simple Apple Health XML to CSV and Reports
 
 A simple script to convert Apple Health's export.xml file to an easy to use csv.
-
+Extended by Rainer Thieringer to export more and more datails to a PDF report.
 
 
 ## How to Run 
