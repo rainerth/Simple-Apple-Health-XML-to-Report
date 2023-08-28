@@ -23,7 +23,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-
+TMPDIR = "/tmp"
 
 # %% Function Definitions
 def pre_process(xml_string):
@@ -128,11 +128,11 @@ def save_to_csv(csvpath,health_df):
 	print("Saving CSV file...", end="")
 	sys.stdout.flush()
 
-	today = dt.datetime.now().strftime('%Y-%m-%d')
-	csvpath = csvpath + "/apple_health_export_" + today + ".csv"
+	today = dt.datetime.now().strftime('%Y%m%d')
+	csvpath = csvpath + "/" + today + "_apple_health_export" + ".csv"
 
 	health_df.to_csv(csvpath,index=False)
-	print("done!")
+	print("done! See " + csvpath + " for your CSV data.")
 
 	return (csvpath)
 
@@ -264,12 +264,12 @@ def main():
 		print("Verbose mode disabled")
 	if args.output:
 		print("Output directory: " + args.output)
-	if args.file:
-		print("Input file: " + args.file)
 	if args.skip:
 		print("Skipping reading fresh data and using CSV instead")
 		csvpath = args.output + "/apple_health_export" + ".csv"
 
+	if args.file:
+		print("Input file: " + args.file)
 	else:
 		print("No input file specified")
 		sys.exit(1)
@@ -280,10 +280,9 @@ def main():
 
 		xml_string = pre_process(xml_string)
 		health_df = xml_to_csv(xml_string)
-		csvpath = save_to_csv(args.output,health_df)
+		csvpath = save_to_csv(TMPDIR,health_df)
 
-	data = pd.read_csv(csvpath, parse_dates=['startDate', 'endDate', 'creationDate'])
-	#data = pd.read_csv(csvpath, parse_dates=['startDate', 'endDate', 'creationDate'], dtype={'value': float})
+	data = pd.read_csv(csvpath, parse_dates=['startDate', 'endDate', 'creationDate'], usecols=['type','sourceName','value','unit','startDate','endDate','creationDate'])
 
 	# Data filtering for systolic and diastolic blood pressure
 	heart_rate_data = data[ (data['type'] == "HeartRate") & (data['sourceName'] == "OMRON connect") ]
@@ -326,7 +325,7 @@ def main():
 
 	# %% PDF printing
 	# Create a PDF file to save the plots
-	with PdfPages(args.output + '/blood_pressure_charts_and_boxplots.pdf') as pdf:
+	with PdfPages(args.output + '/blutdruck.pdf') as pdf:
 		# %% Scatterplots for 2015 + 2016, 2019, and 2023
 		fig, ax1 = plt.subplots(figsize=(15, 7))
 		save_plot_to_pdf(data_2015_2016, heart_rate_data, 'Blutdruck und Herzfrequenz für 2015 + 2016', y_min_limit, y_max_limit, ax1)
