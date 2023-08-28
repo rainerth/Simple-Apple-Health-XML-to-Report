@@ -286,7 +286,7 @@ def main():
 	#data = pd.read_csv(csvpath, parse_dates=['startDate', 'endDate', 'creationDate'], dtype={'value': float})
 
 	# Data filtering for systolic and diastolic blood pressure
-	heart_rate_data = data[data['type'] == "HeartRate"]
+	heart_rate_data = data[ (data['type'] == "HeartRate") & (data['sourceName'] == "OMRON connect") ]
 	# heart_rate_data['value'] = pd.to_numeric(heart_rate_data['value'], errors='coerce')
 	heart_rate_data.loc[:, 'value'] = pd.to_numeric(heart_rate_data['value'], errors='coerce')
 
@@ -324,9 +324,10 @@ def main():
 	# Relevant data filtering for 2015 + 2016, 2019, and 2023
 	relevant_data = merged_data[merged_data['year'].isin([2015, 2016, 2019, 2023])]
 
+	# %% PDF printing
 	# Create a PDF file to save the plots
 	with PdfPages(args.output + '/blood_pressure_charts_and_boxplots.pdf') as pdf:
-		# Scatterplots for 2015 + 2016, 2019, and 2023
+		# %% Scatterplots for 2015 + 2016, 2019, and 2023
 		fig, ax1 = plt.subplots(figsize=(15, 7))
 		save_plot_to_pdf(data_2015_2016, heart_rate_data, 'Blutdruck und Herzfrequenz für 2015 + 2016', y_min_limit, y_max_limit, ax1)
 		pdf.savefig(fig)
@@ -342,7 +343,7 @@ def main():
 		pdf.savefig(fig)
 		plt.close()
 
-		# Boxplots
+		# %% Boxplots
 		fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
 		relevant_data.boxplot(column='value_systolic', by=['year', 'week'], ax=ax1, grid=False)
 		ax1.set_title('Boxplot für Systolischen Blutdruck')
@@ -354,7 +355,8 @@ def main():
 		ax2.set_xlabel('Jahr, Woche')
 		fig.suptitle('')
 		plt.tight_layout()
-		plt.xticks(rotation=90)
+		plt.xticks(rotation=45, fontsize=8)
+		plt.subplots_adjust(bottom=0.1)
 		pdf.savefig(fig)
 		plt.close()
 
