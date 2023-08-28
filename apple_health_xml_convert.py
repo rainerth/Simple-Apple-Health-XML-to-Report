@@ -324,54 +324,6 @@ def main():
 	# Relevant data filtering for 2015 + 2016, 2019, and 2023
 	relevant_data = merged_data[merged_data['year'].isin([2015, 2016, 2019, 2023])]
 
-	# Plotting the boxplots
-	fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
-
-	# Boxplot for Systolic Blood Pressure
-	relevant_data.boxplot(column='value_systolic', by=['year', 'week'], ax=ax1, grid=False)
-	ax1.set_title('Boxplot für Systolischen Blutdruck')
-	ax1.set_ylabel('Systolischer Blutdruck (mmHg)')
-	ax1.set_xlabel('')
-
-	# Boxplot for Diastolic Blood Pressure
-	relevant_data.boxplot(column='value_diastolic', by=['year', 'week'], ax=ax2, grid=False)
-	ax2.set_title('Boxplot für Diastolischen Blutdruck')
-	ax2.set_ylabel('Diastolischer Blutdruck (mmHg)')
-	ax2.set_xlabel('Jahr, Woche')
-
-	# Adjusting layout
-	fig.suptitle('')
-	plt.tight_layout()
-	plt.xticks(rotation=90)
-	plt.show()
-
-
-	# Create a PDF to save the plots
-	with PdfPages(args.output + '/blood_pressure_boxplots.pdf') as pdf:
-		fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
-
-		# Boxplot for Systolic Blood Pressure
-		relevant_data.boxplot(column='value_systolic', by=['year', 'week'], ax=ax1, grid=False)
-		ax1.set_title('Boxplot für Systolischen Blutdruck')
-		ax1.set_ylabel('Systolischer Blutdruck (mmHg)')
-		ax1.set_xlabel('')
-
-		# Boxplot for Diastolic Blood Pressure
-		relevant_data.boxplot(column='value_diastolic', by=['year', 'week'], ax=ax2, grid=False)
-		ax2.set_title('Boxplot für Diastolischen Blutdruck')
-		ax2.set_ylabel('Diastolischer Blutdruck (mmHg)')
-		ax2.set_xlabel('Jahr, Woche')
-
-		# Adjusting layout
-		fig.suptitle('')
-		plt.tight_layout()
-		plt.xticks(rotation=90)
-
-		# Save the plot to the PDF
-		pdf.savefig(fig)
-		plt.close()
-
-
 	# Create a PDF file to save the plots
 	with PdfPages(args.output + '/blood_pressure_charts_and_boxplots.pdf') as pdf:
 		# Scatterplots for 2015 + 2016, 2019, and 2023
