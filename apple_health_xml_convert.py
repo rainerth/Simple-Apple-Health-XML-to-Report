@@ -21,6 +21,8 @@ import sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
 
 
 # %% Function Definitions
@@ -218,6 +220,38 @@ def plot_data_with_german_labels_adjusted(data, title):
     plt.tight_layout()
     plt.show()
 
+# Function to save plot to PDF with consistent y-axis
+def save_plot_to_pdf(data, title, y_min, y_max, ax):
+    ax.scatter(data['startDate'], data['value_systolic'], label='Systolisch', color='b', marker='o')
+    ax.scatter(data['startDate'], data['value_diastolic'], label='Diastolisch', color='r', marker='o')
+
+    # Trendline for Systolic
+    z_systolic = np.polyfit(data.index, data['value_systolic'], 1)
+    p_systolic = np.poly1d(z_systolic)
+    ax.plot(data['startDate'], p_systolic(data.index), linestyle='-', color='b', alpha=0.5)
+
+    # Trendline for Diastolic
+    z_diastolic = np.polyfit(data.index, data['value_diastolic'], 1)
+    p_diastolic = np.poly1d(z_diastolic)
+    ax.plot(data['startDate'], p_diastolic(data.index), linestyle='-', color='r', alpha=0.5)
+
+    # Labels, title, and consistent y-axis limits
+    ax.set_xlabel('Datum')
+    ax.set_ylabel('Blutdruck (mmHg)')
+    ax.set_title(title)
+    ax.legend(loc='upper left')
+    ax.set_xlim([data['startDate'].min(), data['startDate'].max()])
+    ax.set_ylim([y_min, y_max])
+
+    # Heart Rate on a secondary y-axis
+    heart_rate_filtered = heart_rate_data[(heart_rate_data['startDate'] >= data['startDate'].min()) &
+                                          (heart_rate_data['startDate'] <= data['startDate'].max())]
+    ax2 = ax.twinx()
+    ax2.scatter(heart_rate_filtered['startDate'], heart_rate_filtered['value'], label='Herzfrequenz', color='g', marker='x')
+    ax2.set_ylabel('Herzfrequenz (Schläge/Min)')
+    ax2.legend(loc='upper right')
+
+
 
 # %% Main Function
 def main():
@@ -300,6 +334,99 @@ def main():
 	plt.tight_layout()
 	plt.xticks(rotation=90)
 	plt.show()
+
+	# Plotting the data with trend as a pdf file
+	plot_data_with_trend(merged_data, 'Blutdruck mit Trend')
+
+	# Plotting the data with German labels and adjusted x-axis limits
+	plot_data_with_german_labels_adjusted(merged_data, 'Blutdruck mit Trend')
+
+	# Plotting the data with trend for 2015 + 2016, 2019, and 2023
+	plot_data_with_trend(relevant_data, 'Blutdruck mit Trend')
+
+	# Plotting the data with German labels and adjusted x-axis limits for 2015 + 2016, 2019, and 2023
+	plot_data_with_german_labels_adjusted(relevant_data, 'Blutdruck mit Trend')
+
+	# Plotting the data with trend for 2015 + 2016
+	plot_data_with_trend(data_2015_2016, 'Blutdruck mit Trend')
+
+	# Plotting the data with German labels and adjusted x-axis limits for 2015 + 2016
+	plot_data_with_german_labels_adjusted(data_2015_2016, 'Blutdruck mit Trend')
+
+	# Plotting the data with trend for 2019
+	plot_data_with_trend(data_2019, 'Blutdruck mit Trend')
+
+	# Plotting the data with German labels and adjusted x-axis limits for 2019
+	plot_data_with_german_labels_adjusted(data_2019, 'Blutdruck mit Trend')
+
+	# Plotting the data with trend for 2023
+	plot_data_with_trend(data_2023, 'Blutdruck mit Trend')
+
+	# Plotting the data with German labels and adjusted x-axis limits for 2023
+	plot_data_with_german_labels_adjusted(data_2023, 'Blutdruck mit Trend')
+
+
+
+	# Create a PDF to save the plots
+	with PdfPages(args.output + '/blood_pressure_boxplots.pdf') as pdf:
+		fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
+
+		# Boxplot for Systolic Blood Pressure
+		relevant_data.boxplot(column='value_systolic', by=['year', 'week'], ax=ax1, grid=False)
+		ax1.set_title('Boxplot für Systolischen Blutdruck')
+		ax1.set_ylabel('Systolischer Blutdruck (mmHg)')
+		ax1.set_xlabel('')
+
+		# Boxplot for Diastolic Blood Pressure
+		relevant_data.boxplot(column='value_diastolic', by=['year', 'week'], ax=ax2, grid=False)
+		ax2.set_title('Boxplot für Diastolischen Blutdruck')
+		ax2.set_ylabel('Diastolischer Blutdruck (mmHg)')
+		ax2.set_xlabel('Jahr, Woche')
+
+		# Adjusting layout
+		fig.suptitle('')
+		plt.tight_layout()
+		plt.xticks(rotation=90)
+
+		# Save the plot to the PDF
+		pdf.savefig(fig)
+		plt.close()
+
+
+	# Create a PDF file to save the plots
+	with PdfPages(args.output + '/blood_pressure_charts_and_boxplots.pdf') as pdf:
+		# Scatterplots for 2015 + 2016, 2019, and 2023
+		fig, ax1 = plt.subplots(figsize=(15, 7))
+		save_plot_to_pdf(data_2015_2016_filtered, 'Blutdruck und Herzfrequenz für 2015 + 2016', y_min_limit, y_max_limit, ax1)
+		pdf.savefig(fig)
+		plt.close()
+
+		fig, ax1 = plt.subplots(figsize=(15, 7))
+		save_plot_to_pdf(data_2019_filtered, 'Blutdruck und Herzfrequenz für 2019', y_min_limit, y_max_limit, ax1)
+		pdf.savefig(fig)
+		plt.close()
+
+		fig, ax1 = plt.subplots(figsize=(15, 7))
+		save_plot_to_pdf(data_2023_filtered, 'Blutdruck und Herzfrequenz für 2023', y_min_limit, y_max_limit, ax1)
+		pdf.savefig(fig)
+		plt.close()
+
+		# Boxplots
+		fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
+		relevant_data.boxplot(column='value_systolic', by=['year', 'week'], ax=ax1, grid=False)
+		ax1.set_title('Boxplot für Systolischen Blutdruck')
+		ax1.set_ylabel('Systolischer Blutdruck (mmHg)')
+		ax1.set_xlabel('')
+		relevant_data.boxplot(column='value_diastolic', by=['year', 'week'], ax=ax2, grid=False)
+		ax2.set_title('Boxplot für Diastolischen Blutdruck')
+		ax2.set_ylabel('Diastolischer Blutdruck (mmHg)')
+		ax2.set_xlabel('Jahr, Woche')
+		fig.suptitle('')
+		plt.tight_layout()
+		plt.xticks(rotation=90)
+		pdf.savefig(fig)
+		plt.close()
+
 
 	return
 
