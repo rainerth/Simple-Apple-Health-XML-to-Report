@@ -161,7 +161,7 @@ def setup_argparse():
 
 
 # Function to plot the data and trend
-def plot_data_with_trend(data, title=''):
+def plot_data_with_trend(data, hdata, title=''):
     fig, ax1 = plt.subplots(figsize=(15, 7))
     ax1.scatter(data['startDate'], data['value_systolic'], label='Systolic', color='b', marker='o')
     ax1.scatter(data['startDate'], data['value_diastolic'], label='Diastolic', color='r', marker='o')
@@ -178,8 +178,8 @@ def plot_data_with_trend(data, title=''):
     ax1.set_title(title)
     ax1.legend(loc='upper left')
 
-    heart_rate_filtered = heart_rate_data[(heart_rate_data['startDate'] >= data['startDate'].min()) &
-                                          (heart_rate_data['startDate'] <= data['startDate'].max())]
+    heart_rate_filtered = hdata[(hdata['startDate'] >= data['startDate'].min()) &
+                                          (hdata['startDate'] <= data['startDate'].max())]
     ax2 = ax1.twinx()
     ax2.scatter(heart_rate_filtered['startDate'], heart_rate_filtered['value'], label='Heart Rate', color='g', marker='x')
     ax2.set_ylabel('Heart Rate (count/min)')
@@ -196,7 +196,7 @@ def filter_weeks_with_data(data):
     return valid_weeks
 
 # Function to plot data with German labels and adjusted x-axis limits
-def plot_data_with_german_labels_adjusted(data, title):
+def plot_data_with_german_labels_adjusted(data, hdata, title):
     fig, ax1 = plt.subplots(figsize=(15, 7))
     ax1.scatter(data['startDate'], data['value_systolic'], label='Systolisch', color='b', marker='o')
     ax1.scatter(data['startDate'], data['value_diastolic'], label='Diastolisch', color='r', marker='o')
@@ -211,8 +211,8 @@ def plot_data_with_german_labels_adjusted(data, title):
     ax1.set_title(title)
     ax1.legend(loc='upper left')
     ax1.set_xlim([data['startDate'].min(), data['startDate'].max()])
-    heart_rate_filtered = heart_rate_data[(heart_rate_data['startDate'] >= data['startDate'].min()) &
-                                          (heart_rate_data['startDate'] <= data['startDate'].max())]
+    heart_rate_filtered = hdata[(hdata['startDate'] >= data['startDate'].min()) &
+                                          (hdata['startDate'] <= data['startDate'].max())]
     ax2 = ax1.twinx()
     ax2.scatter(heart_rate_filtered['startDate'], heart_rate_filtered['value'], label='Herzfrequenz', color='g', marker='x')
     ax2.set_ylabel('Herzfrequenz (Schläge/Min)')
@@ -221,7 +221,7 @@ def plot_data_with_german_labels_adjusted(data, title):
     plt.show()
 
 # Function to save plot to PDF with consistent y-axis
-def save_plot_to_pdf(data, title, y_min, y_max, ax):
+def save_plot_to_pdf(data, hdata, title, y_min, y_max, ax):
     ax.scatter(data['startDate'], data['value_systolic'], label='Systolisch', color='b', marker='o')
     ax.scatter(data['startDate'], data['value_diastolic'], label='Diastolisch', color='r', marker='o')
 
@@ -244,8 +244,8 @@ def save_plot_to_pdf(data, title, y_min, y_max, ax):
     ax.set_ylim([y_min, y_max])
 
     # Heart Rate on a secondary y-axis
-    heart_rate_filtered = heart_rate_data[(heart_rate_data['startDate'] >= data['startDate'].min()) &
-                                          (heart_rate_data['startDate'] <= data['startDate'].max())]
+    heart_rate_filtered = hdata[(hdata['startDate'] >= data['startDate'].min()) &
+                                          (hdata['startDate'] <= data['startDate'].max())]
     ax2 = ax.twinx()
     ax2.scatter(heart_rate_filtered['startDate'], heart_rate_filtered['value'], label='Herzfrequenz', color='g', marker='x')
     ax2.set_ylabel('Herzfrequenz (Schläge/Min)')
@@ -287,14 +287,14 @@ def main():
 
 	# Data filtering for systolic and diastolic blood pressure
 	heart_rate_data = data[data['type'] == "HeartRate"]
-	heart_rate_data['value'] = pd.to_numeric(heart_rate_data['value'], errors='coerce')
-
+	# heart_rate_data['value'] = pd.to_numeric(heart_rate_data['value'], errors='coerce')
+	heart_rate_data.loc[:, 'value'] = pd.to_numeric(heart_rate_data['value'], errors='coerce')
 
 	data_systolic = data[data['type'] == "BloodPressureSystolic"].rename(columns={"value": "value_systolic", "type": "type_systolic", "sourceName": "sourceName_systolic", "endDate": "endDate_systolic", "creationDate": "creationDate_systolic"})
-	data_systolic['value_systolic'] = pd.to_numeric(data_systolic['value_systolic'], errors='coerce')
+	data_systolic.loc[:, 'value_systolic'] = pd.to_numeric(data_systolic['value_systolic'], errors='coerce')
 
 	data_diastolic = data[data['type'] == "BloodPressureDiastolic"].rename(columns={"value": "value_diastolic", "type": "type_diastolic", "sourceName": "sourceName_diastolic", "endDate": "endDate_diastolic", "creationDate": "creationDate_diastolic"})
-	data_diastolic['value_diastolic'] = pd.to_numeric(data_diastolic['value_diastolic'], errors='coerce')
+	data_diastolic.loc[:, 'value_diastolic'] = pd.to_numeric(data_diastolic['value_diastolic'], errors='coerce')
 
 	merged_data = pd.merge_asof(data_systolic.sort_values('startDate'), data_diastolic.sort_values('startDate'), on="startDate", direction="nearest")
 
@@ -303,9 +303,19 @@ def main():
 	data_2019 = merged_data[merged_data['startDate'].dt.year == 2019]
 	data_2023 = merged_data[merged_data['startDate'].dt.year == 2023]
 
+
 	# Average blood pressure calculation
 	average_systolic = merged_data['value_systolic'].mean()
 	average_diastolic = merged_data['value_diastolic'].mean()
+	average_systolic_2015_2016 = data_2015_2016['value_systolic'].mean()
+	average_diastolic_2015_2016 = data_2015_2016['value_diastolic'].mean()
+	average_systolic_2019 = data_2019['value_systolic'].mean()
+	average_diastolic_2019 = data_2019['value_diastolic'].mean()
+	average_systolic_2023 = data_2023['value_systolic'].mean()
+	average_diastolic_2023 = data_2023['value_diastolic'].mean()
+
+	y_min_limit = merged_data['value_diastolic'].min()
+	y_max_limit = merged_data['value_systolic'].max()
 
 	# Extracting week and year from the startDate for boxplot
 	merged_data['week'] = merged_data['startDate'].dt.isocalendar().week
@@ -334,37 +344,6 @@ def main():
 	plt.tight_layout()
 	plt.xticks(rotation=90)
 	plt.show()
-
-	# Plotting the data with trend as a pdf file
-	plot_data_with_trend(merged_data, 'Blutdruck mit Trend')
-
-	# Plotting the data with German labels and adjusted x-axis limits
-	plot_data_with_german_labels_adjusted(merged_data, 'Blutdruck mit Trend')
-
-	# Plotting the data with trend for 2015 + 2016, 2019, and 2023
-	plot_data_with_trend(relevant_data, 'Blutdruck mit Trend')
-
-	# Plotting the data with German labels and adjusted x-axis limits for 2015 + 2016, 2019, and 2023
-	plot_data_with_german_labels_adjusted(relevant_data, 'Blutdruck mit Trend')
-
-	# Plotting the data with trend for 2015 + 2016
-	plot_data_with_trend(data_2015_2016, 'Blutdruck mit Trend')
-
-	# Plotting the data with German labels and adjusted x-axis limits for 2015 + 2016
-	plot_data_with_german_labels_adjusted(data_2015_2016, 'Blutdruck mit Trend')
-
-	# Plotting the data with trend for 2019
-	plot_data_with_trend(data_2019, 'Blutdruck mit Trend')
-
-	# Plotting the data with German labels and adjusted x-axis limits for 2019
-	plot_data_with_german_labels_adjusted(data_2019, 'Blutdruck mit Trend')
-
-	# Plotting the data with trend for 2023
-	plot_data_with_trend(data_2023, 'Blutdruck mit Trend')
-
-	# Plotting the data with German labels and adjusted x-axis limits for 2023
-	plot_data_with_german_labels_adjusted(data_2023, 'Blutdruck mit Trend')
-
 
 
 	# Create a PDF to save the plots
@@ -397,17 +376,17 @@ def main():
 	with PdfPages(args.output + '/blood_pressure_charts_and_boxplots.pdf') as pdf:
 		# Scatterplots for 2015 + 2016, 2019, and 2023
 		fig, ax1 = plt.subplots(figsize=(15, 7))
-		save_plot_to_pdf(data_2015_2016_filtered, 'Blutdruck und Herzfrequenz für 2015 + 2016', y_min_limit, y_max_limit, ax1)
+		save_plot_to_pdf(data_2015_2016, heart_rate_data, 'Blutdruck und Herzfrequenz für 2015 + 2016', y_min_limit, y_max_limit, ax1)
 		pdf.savefig(fig)
 		plt.close()
 
 		fig, ax1 = plt.subplots(figsize=(15, 7))
-		save_plot_to_pdf(data_2019_filtered, 'Blutdruck und Herzfrequenz für 2019', y_min_limit, y_max_limit, ax1)
+		save_plot_to_pdf(data_2019, heart_rate_data, 'Blutdruck und Herzfrequenz für 2019', y_min_limit, y_max_limit, ax1)
 		pdf.savefig(fig)
 		plt.close()
 
 		fig, ax1 = plt.subplots(figsize=(15, 7))
-		save_plot_to_pdf(data_2023_filtered, 'Blutdruck und Herzfrequenz für 2023', y_min_limit, y_max_limit, ax1)
+		save_plot_to_pdf(data_2023, heart_rate_data, 'Blutdruck und Herzfrequenz für 2023', y_min_limit, y_max_limit, ax1)
 		pdf.savefig(fig)
 		plt.close()
 
